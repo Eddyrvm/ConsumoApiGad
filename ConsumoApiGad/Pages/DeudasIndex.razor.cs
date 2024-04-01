@@ -16,7 +16,7 @@ namespace ConsumoApiGad.Pages
         private string? ValorB { get; set; }
         private string? SelectedOption { get; set; }
         private bool IsLoading { get; set; }
-        bool MostrarTabla = true;
+
 
         private void ClearForm()
         {
@@ -26,11 +26,8 @@ namespace ConsumoApiGad.Pages
             Personas.Identificador = string.Empty;
             Personas.Direccion = string.Empty;
             Personas.Email = string.Empty;
-            Personas.Nuevo = false;
-            Personas.Rural = false;
             Personas.Telefono = string.Empty;
             Titulo.ClavePredia = string.Empty;
-            Titulo.FechaEmision = string.Empty;
             Titulo.Year = string.Empty;
             Titulo.ValorTitulo = string.Empty;
             Titulo.ValorEmision = string.Empty;
@@ -39,7 +36,7 @@ namespace ConsumoApiGad.Pages
             Componente.NombreMiembro = string.Empty;
             listRubro.Clear();
             listComp.Clear();
-            MostrarTabla = false;
+
         }
 
         private async Task SubmitFormAsync()
@@ -65,9 +62,6 @@ namespace ConsumoApiGad.Pages
                             Identificador = (string)item.SelectToken("identificador")!,
                             Direccion = (string)item.SelectToken("direccion")!,
                             Email = (string)item.SelectToken("email")!,
-                            Id = (int)item.SelectToken("id")!,
-                            Nuevo = (bool)item.SelectToken("nuevo")!,
-                            Rural = (bool)item.SelectToken("rural")!,
                             Telefono = (string)item.SelectToken("telefono")!,
                         };
                     }
