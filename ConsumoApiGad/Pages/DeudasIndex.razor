@@ -1,0 +1,171 @@
+﻿@page "/deudas"
+@using System.Net.Http
+@using System.Net.Http.Json
+@using ConsumoApiGAD.Models
+@using Newtonsoft.Json
+@using Newtonsoft.Json.Linq
+@using System.Collections.Generic
+
+
+<div class="row">
+    <div class="col-sm-8 mb-3 mb-sm-0">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Consulta tus valores pendientes.</h5>
+                <p class="card-text">
+                    <form class="row row-cols-lg-auto g-3 align-items-center" @onsubmit="SubmitFormAsync">
+                        <div class="col-5">
+                            <label class="visually-hidden" for="inlineFormSelectPref">Preference</label>
+                            <select class="form-select" id="inlineFormSelectPref" @bind="SelectedOption">
+                                <option value="" selected>Elegir...</option>
+                                <option value="1">Cédula</option>
+                                <option value="2">RUC</option>
+                            </select>
+                        </div>
+
+                        <div class="col-7">
+                            <div class="input-group">
+                                <div class="input-group-text">#</div>
+                                <input type="text" class="form-control" id="valorB" @bind="ValorB" placeholder="Valor de consulta" />
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <button type="submit" class="btn btn-success">Consultar</button>
+                        </div>
+                        <div class="col-6">
+                            <button type="button" class="btn btn-warning" @onclick="ClearForm">Nueva Consulta</button>
+                        </div>
+                    </form>
+                </p>
+            </div>
+        </div>
+
+        @if (IsLoading)
+        {
+            <p>
+                <div class="d-flex justify-content-center">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            </p>
+        }
+
+        else
+        {
+            @if (!string.IsNullOrEmpty(Personas.NombresApellidos))
+            {
+                <p></p>
+                <p>
+                    Fecha de consulta:
+                    <strong class="text-success">
+                        @(FechaHora == null ? DateTime.Now.ToString() : FechaHora.ToString())
+                    </strong>
+                </p>
+                <div class="card mb-3">
+                    <h5 class="card-header">Información del Contribuyente</h5>
+                    <div class="card-body">
+                        <h6 class="card-title">Apellidos y Nombres:</h6>
+                        <p class="card-text">
+                            <h5><strong class="text-primary">@(Personas.NombresApellidos ?? "N/A")</strong></h5>
+                            <h6 class="text-primary text-opacity-50">@(Personas.Identificador ?? "N/A")</h6>
+                            <h6 class="text-primary text-opacity-50">@(Personas.Email ?? "N/A")</h6>
+                        </p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-success" role="alert">
+                    No registra valores pendientes...
+                </div>
+            }
+
+        }
+    </div>
+
+    <div class="col-md-5 col-lg-4 order-md-last">
+        <h4 class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-primary">Resumen valores</span>
+            <span class="badge bg-primary rounded-pill">3</span>
+        </h4>
+
+        @if (Componente != null)
+        {
+            var grupoComp = listComp.Where(r => r.Valor > 0) // Filtrar los rubros con Valor > 0
+            .GroupBy(r => r.NombreMiembro)// Agrupar por NombreRubro
+            .ToList(); // Convertir a lista para iterar
+            <ul class="list-group mb-3">
+                @foreach (var comp in grupoComp)
+                {
+                    <li class="list-group-item d-flex justify-content-between lh-sm">
+                        <div>
+                            <h6 class="my-0">Componente</h6>
+                            <small class="text-body-secondary">@((comp.Key != null) ? comp.Key : "")</small>
+                        </div>
+                        @foreach (var comp1 in comp)
+                        {
+                            <span class="text-body-secondary">$ @(comp1.Valor != 0 ? comp1.Valor.ToString("N2") : "")</span>
+                        }
+                    </li>
+                }
+                <li class="list-group-item d-flex justify-content-between bg-body-tertiary bg-success bg-opacity-10">
+                    <div class="text-success">
+                        <span>Total (USD)</span>
+                    </div>
+                    <strong class="text-success">$ @grupoComp.SelectMany(comp => comp).Sum(c => c.Valor).ToString("N2")</strong>
+                </li>
+            </ul>
+        }
+
+        <form class="card p-2">
+            <div class="input-group">
+                <button type="submit" class="btn btn-success col-12">Procesar pago</button>
+            </div>
+        </form>
+    </div>
+</div>
+<h5 class="text-secondary mb-3">Detalle de Títulos pendientes:</h5>
+@if (IsLoading)
+{
+    <p>
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+        </div>
+    </p>
+}
+
+<table class="table table-sm">
+    <thead>
+        <tr>
+            <th>Nombre Componente</th>
+            <th>Total</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Componente != null)
+        {
+            var grupoComp = listComp.Where(r => r.Valor > 0) // Filtrar los rubros con Valor > 0
+            .GroupBy(r => r.NombreMiembro)// Agrupar por NombreRubro
+            .ToList(); // Convertir a lista para iterar
+
+            @foreach (var comp in grupoComp)
+            {
+                <tr>
+                    <td colspan="1">@comp.Key</td> <!-- Mostrar el nombre del grupo -->
+                    @foreach (var comp1 in comp)
+                    {
+                        <td>$ @comp1.Valor.ToString("N2")</td>
+                    }
+                </tr>
+            }
+            <tr>
+                <td colspan="1" class="bg-success bg-opacity-10"><strong class="text-success">Total (USD):</strong></td>
+                <td class="bg-success bg-opacity-10"><strong class="text-success">$ @grupoComp.SelectMany(comp => comp).Sum(c => c.Valor).ToString("N2")</strong></td> <!-- Calcular la suma total de todos los grupos -->
+            </tr>
+        }
+
+    </tbody>
+</table>
